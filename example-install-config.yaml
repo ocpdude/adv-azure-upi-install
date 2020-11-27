@@ -1,0 +1,41 @@
+apiVersion: v1
+baseDomain: <BASE_DOMAIN_NAME>
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform: {}
+  replicas: 3
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 3
+metadata:
+  creationTimestamp: null
+  name: <CLUSTER_NAME>
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: <AZURE_VNET_CIDR>
+  networkType: OpenShiftSDN
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  azure:
+    cloudName: AzurePublicCloud
+    baseDomainResourceGroupName: <AZURE_DNS_RG>
+    resourceGroupName: <AZURE_RG>
+    computeSubnet: <AZURE_WORKER_SUB>
+    controlPlaneSubnet: <AZURE_MASTER_SUB>
+    networkResourceGroupName: <AZURE_NETWORK_RG>
+    virtualNetwork: <AZURE_VNET>
+    outboundType: UserDefinedRouting
+    region: <AZURE_REGION>
+publish: Internal
+pullSecret: '{"auths":{"cloud.openshift.com":...}'
+sshKey: |
+  ssh-rsa ...

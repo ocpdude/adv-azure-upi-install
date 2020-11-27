@@ -1,0 +1,190 @@
+{
+  "$schema" : "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion" : "1.0.0.0",
+  "parameters" : {
+    "baseName" : {
+      "type" : "string",
+      "minLength" : 1,
+      "metadata" : {
+        "description" : "Base name to be used in resource names (usually the cluster's Infra ID)"
+      }
+    },
+    "workerIgnition" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "Ignition content for the worker nodes"
+      }
+    },
+    "numberOfNodes" : {
+      "type" : "int",
+      "defaultValue" : 3,
+      "minValue" : 2,
+      "maxValue" : 30,
+      "metadata" : {
+        "description" : "Number of OpenShift compute nodes to deploy"
+      }
+    },
+    "sshKeyData" : {
+      "type" : "securestring",
+      "metadata" : {
+        "description" : "SSH RSA public key file as a string"
+      }
+    },
+    "nodeVMSize" : {
+      "type" : "string",
+      "defaultValue" : "Standard_D4s_v3",
+      "metadata" : {
+        "description" : "The size of the each Node Virtual Machine"
+      }
+    },
+    "virtualNetworkResourceGroup" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "Location of the virtual network resource group"
+      }
+    },
+    "virtualNetworkName" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "Name of the virtual network in virtualNetworkResourceGroup"
+      }
+    },
+    "serviceSubnetName" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "Name of the worker subnet"
+      }
+    },
+    "identityName" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "Managed identity stored in Azure Creds"
+      }
+    }
+  },
+  "variables" : {
+    "location" : "[resourceGroup().location]",
+    "virtualNetworkID" : "[resourceId(parameters('virtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+    "serviceSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', parameters('serviceSubnetName'))]",
+    "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal-lb')]",
+    "sshKeyPath" : "/home/capi/.ssh/authorized_keys",
+    "imageName" : "[concat(parameters('baseName'), '-image')]",
+    "copy" : [
+      {
+        "name" : "vmNames",
+        "count" :  "[parameters('numberOfNodes')]",
+        "input" : "[concat(parameters('baseName'), '-worker-', variables('location'), '-', copyIndex('vmNames', 1))]"
+      }
+    ]
+  },
+  "resources" : [
+    {
+      "apiVersion" : "2019-05-01",
+      "name" : "[concat('node', copyIndex())]",
+      "type" : "Microsoft.Resources/deployments",
+      "copy" : {
+        "name" : "nodeCopy",
+        "count" : "[length(variables('vmNames'))]"
+      },
+      "properties" : {
+        "mode" : "Incremental",
+        "template" : {
+          "$schema" : "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion" : "1.0.0.0",
+          "resources" : [
+            {
+              "apiVersion" : "2018-06-01",
+              "type" : "Microsoft.Network/networkInterfaces",
+              "name" : "[concat(variables('vmNames')[copyIndex()], '-nic')]",
+              "location" : "[variables('location')]",
+              "properties" : {
+                "ipConfigurations" : [
+                  {
+                    "name" : "pipConfig",
+                    "properties" : {
+                      "privateIPAllocationMethod" : "Dynamic",
+                      "subnet" : {
+                        "id" : "[variables('serviceSubnetRef')]"
+                      },
+                      "loadBalancerBackendAddressPools" : [ 
+                        {
+                          "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('internalLoadBalancerName'), '/backendAddressPools/internal-lb-backend')]"
+                        },
+                        {
+                          "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('internalLoadBalancerName'), '/backendAddressPools/internal-apps-backend')]"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "apiVersion" : "2018-06-01",
+              "type" : "Microsoft.Compute/virtualMachines",
+              "name" : "[variables('vmNames')[copyIndex()]]",
+              "location" : "[variables('location')]",
+              "tags" : {
+                "kubernetes.io-cluster-ffranzupi": "owned"
+              },
+              "identity" : {
+                "type" : "userAssigned",
+                "userAssignedIdentities" : {
+                  "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('identityName'))]" : {}
+                }
+              },
+              "dependsOn" : [
+                "[concat('Microsoft.Network/networkInterfaces/', concat(variables('vmNames')[copyIndex()], '-nic'))]"
+              ],
+              "properties" : {
+                "hardwareProfile" : {
+                  "vmSize" : "[parameters('nodeVMSize')]"
+                },
+                "osProfile" : {
+                  "computerName" : "[variables('vmNames')[copyIndex()]]",
+                  "adminUsername" : "capi",
+                  "customData" : "[parameters('workerIgnition')]",
+                  "linuxConfiguration" : {
+                    "disablePasswordAuthentication" : true,
+                    "ssh" : {
+                      "publicKeys" : [
+                        {
+                          "path" : "[variables('sshKeyPath')]",
+                          "keyData" : "[parameters('sshKeyData')]"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "storageProfile" : {
+                  "imageReference": {
+                    "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]"
+                  },
+                  "osDisk" : {
+                    "name": "[concat(variables('vmNames')[copyIndex()],'_OSDisk')]",
+                    "osType" : "Linux",
+                    "createOption" : "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "Premium_LRS"
+                    },
+                    "diskSizeGB": 128
+                  }
+                },
+                "networkProfile" : {
+                  "networkInterfaces" : [
+                    {
+                      "id" : "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmNames')[copyIndex()], '-nic'))]",
+                      "properties": {
+                        "primary": true
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
