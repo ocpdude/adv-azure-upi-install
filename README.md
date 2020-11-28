@@ -1,7 +1,7 @@
 # Azure UPI Advanced Install
 ## Customized Azure UPI Install as "Contributor" RBAC Only
 
-### To follow along with this documentation see my YouTube video at 
+### To follow along with this documentation see my YouTube video at https://youtu.be/h2QfP9IYzeY
 
 This install is a Private Cluster without access from the Internet, a common build for Enterprises linked with Azure.
 
@@ -20,13 +20,8 @@ Download 'jq' from your package installers or from `https://stedolan.github.io/j
 
 All of the customized ARM templates I used can be found under /json.
 
-The script to follow is `AdvancedAzureUPIScript.txt`
+The script to follow is `install-script.md`
 
-
-
-
-
-TO DO: Convert scritp to markdown
 
 
 
