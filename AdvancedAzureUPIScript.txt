@@ -3,8 +3,12 @@ OCP UPI Advanced Installation Script for Azure
 Ref: YouTube Video - 
 
 
-This script expects the SPN to have Contributor rights assigned to the Resource Group. This script and accompanying customized templates are provided to help install OpenShift 4.6+ on Azure within a Private Network with Restricted “Contributor” roles to the SPN and Managed Identity. 
-	*	Elevated privileges required for this step, please have your administrator / owner build these in advance along with the Resource Group, VNET and all DNS entries.
+This script expects the SPN to have Contributor rights assigned to the Resource Group. This script and accompanying customized 
+templates are provided to help install OpenShift 4.6+ on Azure within a Private Network with Restricted “Contributor” roles to 
+the SPN and Managed Identity. 
+
+	*	Elevated privileges required for this step, please have your administrator / owner build these in advance along with the 
+  Resource Group, VNET and all DNS entries.
 
 PRE INSTALL SETUP
 Environment Variables Used
