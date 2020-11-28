@@ -16,7 +16,7 @@ export RESOURCE_GROUP=<resource_group_name>
 export VNET_RG=<virtual_network_resource_group_name>
 export VNET=<virtual_network_name>
 export INSTALL=<INSTALL_DIRECTORY>
-export KUBECONFIG=${INSTALL_DIR}/auth/kubeconfig
+export KUBECONFIG=${INSTALL}/auth/kubeconfig
 export SSH_KEY=`cat </path/to/.ssh/id_rsa.pub>`
 export STORAGE_SA=<storageaccount>
 export MAN_ID=<managed_identity_name>
@@ -168,7 +168,7 @@ az deployment group create -g ${RESOURCE_GROUP} --template-file "adv_masters.jso
 --parameters identityName="${MAN_ID}"
 
 19. Monitor bootstrap process
-openshift-install wait-for bootstrap-complete --dir=$INSTALL  --log-level debug
+openshift-install wait-for bootstrap-complete --dir=$INSTALL  --log-level info
 
 20. Creating workers
 export WORKER_IGNITION=`cat $INSTALL/worker.ign | base64 -w0 | tr -d '\n'`
@@ -186,10 +186,7 @@ az deployment group create -g ${RESOURCE_GROUP} --template-file "adv_workers.jso
 watch "oc get csr | grep Pending"
 oc adm certificate approve ...... 
 
-22. Add workers to both backend load balancer pools and wait for services to come online.
-watch oc get co
-
-23. Remove Bootstrap Resources
+22. Remove Bootstrap Resources
 
 az vm stop -g ${RESOURCE_GROUP} --name ${INFRA_ID}-bootstrap
 az vm deallocate -g ${RESOURCE_GROUP} --name ${INFRA_ID}-bootstrap
@@ -197,3 +194,6 @@ az vm delete -g ${RESOURCE_GROUP} --name ${INFRA_ID}-bootstrap --yes
 az disk delete -g ${RESOURCE_GROUP} --name ${INFRA_ID}-bootstrap_OSDisk --no-wait --yes
 az network nic delete -g ${RESOURCE_GROUP} --name ${INFRA_ID}-bootstrap-nic --no-wait
 az storage blob delete --account-key ${ACCOUNT_KEY} --account-name ${STORAGE_SA} --container-name files --name bootstrap.ign
+
+23. Add workers to both backend load balancer pools and wait for services to come online.
+watch oc get co
