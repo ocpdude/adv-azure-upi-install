@@ -13,7 +13,7 @@ Note: * Elevated privileges required for this step, please have your administrat
 ```
 export AZURE_REGION=<location>
 export CLUSTER_NAME=<cluster_name>
-export BASE_DOMAIN=<base_domain>.<com>
+export BASE_DOMAIN=<domain_name>
 export PRVT_DNS="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export RESOURCE_GROUP=<resource_group_name>
 export VNET_RG=<virtual_network_resource_group_name>
@@ -31,45 +31,47 @@ export INT_APPS_LB=<internal_apps_lb_ip>
 ### DNS Requirements
 Resolves to ${INT_LB} 
 ```
-	api.<cluster_name>.<base_domain>.<com>
-	api-int.<cluster_name>.<base_domain>.<com>
+api.<cluster_name>.<domain_name>
+api-int.<cluster_name>.<domain_name>
 ```
 Resolves to ${INT_APPS_LB}
 ```
-	*.apps.<cluster_name>.<base_domain>.<com>
+*.apps.<cluster_name>.<domain_name>
 ```
 
 Note: If wildcard resolution is not permitted add this prior to installation, pointing to ${INT_APPS_LB}
+
 ```
-oauth-openshift.apps.<cluster_name>.<base_domain>.<com>
-console-openshift-console.apps.<cluster_name>.<base_domain>.<com>
-downloads-openshift-console.apps.<cluster_name>.<base_domain>.<com>
-default-route-openshift-image-registry.apps.<cluster_name>.<base_domain>.<com>
-alertmanager-main-openshift-monitoring.apps.<cluster_name>.<base_domain>.<com>
-grafana-openshift-monitoring.apps.<cluster_name>.<base_domain>.<com>
-prometheus-k8s-openshift-monitoring.apps.<cluster_name>.<base_domain>.<com>
-thanos-querier-openshift-monitoring.apps.<cluster_name>.<base_domain>.<com>
+oauth-openshift.apps.<cluster_name>.<domain_name>
+console-openshift-console.apps.<cluster_name>.<domain_name>
+downloads-openshift-console.apps.<cluster_name>.<domain_name>
+default-route-openshift-image-registry.apps.<cluster_name>.<domain_name>
+alertmanager-main-openshift-monitoring.apps.<cluster_name>.<domain_name>
+grafana-openshift-monitoring.apps.<cluster_name>.<domain_name>
+prometheus-k8s-openshift-monitoring.apps.<cluster_name>.<domain_name>
+thanos-querier-openshift-monitoring.apps.<cluster_name>.<domain_name>
 ```
 
-1. *Create Identity Acct and assign "Contributor" role to RG 
-```
-az identity create -g ${RESOURCE_GROUP} -n ${MAN_ID}
-export PRINCIPAL_ID=`az identity show -g ${RESOURCE_GROUP} -n ${MAN_ID} --query principalId --out tsv` 
-export RESOURCE_GROUP_ID=`az group show -g ${RESOURCE_GROUP} --query id --out tsv`
-az role assignment create --assignee "${PRINCIPAL_ID}" --role 'Contributor' --scope "${RESOURCE_GROUP_ID}"
-```
-2. Create private dns zone = "<cluster_name>.<base_domain>.<com>" for local lookups within the RG
-```
-az network private-dns zone create -g ${RESOURCE_GROUP} -n ${PRVT_DNS}
-```
-3. *Link Private DNS Zone to VNET
-```
-az network private-dns link vnet create -g ${RESOURCE_GROUP} -z ${PRVT_DNS} -n ${CLUSTER_NAME}-network-link -v ${VNET} -e false
-```
-4. Create StorageSA account
-```
-az storage account create -g ${RESOURCE_GROUP} --location ${AZURE_REGION} --name ${STORAGE_SA} --kind Storage --sku Standard_LRS
-```
+1. *Create Identity Acct and assign "Contributor" role to RG \
+`az identity create -g ${RESOURCE_GROUP} -n ${MAN_ID}`
+
+    ```
+    export PRINCIPAL_ID=`az identity show -g ${RESOURCE_GROUP} -n ${MAN_ID} --query principalId --out tsv` 
+
+    export RESOURCE_GROUP_ID=`az group show -g ${RESOURCE_GROUP} --query id --out tsv`
+    ``` 
+
+    `az role assignment create --assignee "${PRINCIPAL_ID}" --role 'Contributor' --scope "${RESOURCE_GROUP_ID}"`
+
+2. Create private dns zone = "<cluster_name>.<domain_name>" for local lookups within the RG \
+`az network private-dns zone create -g ${RESOURCE_GROUP} -n ${PRVT_DNS}`
+
+3. *Link Private DNS Zone to VNET \
+`az network private-dns link vnet create -g ${RESOURCE_GROUP} -z ${PRVT_DNS} -n ${CLUSTER_NAME}-network-link -v ${VNET} -e false`
+
+4. Create StorageSA account \
+`az storage account create -g ${RESOURCE_GROUP} --location ${AZURE_REGION} --name ${STORAGE_SA} --kind Storage --sku Standard_LRS`
+
 
 ## INSTALLATION PROCESS
 

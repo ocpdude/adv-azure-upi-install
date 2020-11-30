@@ -20,7 +20,7 @@ Download 'jq' from your package installers or from `https://stedolan.github.io/j
 
 All of the customized ARM templates I used can be found under /json.
 
-The script to follow is `install-script.md`
+The script to follow is `dude_script.md`
 
 
 
