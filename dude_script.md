@@ -53,7 +53,7 @@ thanos-querier-openshift-monitoring.apps.<cluster_name>.<domain_name>
 ```
 
 1. *Create Identity Acct and assign "Contributor" role to RG \
-`az identity create -g ${RESOURCE_GROUP} -n ${MAN_ID}`
+`az ad sp create-for-rbac --role Contributor -g ${RESOURCE_GROUP} --name ${MAN_ID}`
 
     ```
     export PRINCIPAL_ID=`az identity show -g ${RESOURCE_GROUP} -n ${MAN_ID} --query principalId --out tsv` 
