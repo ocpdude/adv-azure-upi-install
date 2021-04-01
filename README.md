@@ -1,6 +1,8 @@
 # Azure UPI Advanced Install
 ## Customized Azure UPI Install as "Contributor" RBAC Only
 
+Please note, this will NOT work with 4.7 as Red Hat has made some changes that affect these procedures. I'll update this as time allows me to revisit the install.
+
 ### To follow along with this documentation see my YouTube video at https://youtu.be/h2QfP9IYzeY
 
 This install is a Private Cluster without access from the Internet, a common build for Enterprises linked with Azure.

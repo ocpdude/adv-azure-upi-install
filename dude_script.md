@@ -1,4 +1,4 @@
-# OCP UPI Advanced Installation Script for Azure 
+# OCP 4.6 UPI Advanced Installation Script for Azure 
 
 Ref: YouTube Video - https://youtu.be/h2QfP9IYzeY
 
